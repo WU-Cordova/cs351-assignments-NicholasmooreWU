@@ -1,9 +1,80 @@
 from __future__ import annotations
-
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Optional, Tuple, List
+from typing import Any, Callable, Generic, List, Optional, Sequence, Tuple, Union
 
-from datastructures.avltree import AVLTree
+from datastructures.iavltree import IAVLTree, K, V
+
+
+@dataclass
+class AVLNode(Generic[K, V]):
+    def __init__(self, key: K, value: V, left: Optional[AVLNode]=None, right: Optional[AVLNode]=None):
+        self._key = key
+        self._value = value
+        self._left = left
+        self._right = right
+        self._height = 1
+
+    @property
+    def key(self) -> K:
+        return self._key
+
+    @key.setter
+    def key(self, new_key: K) -> None:
+        self._key = new_key
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, new_height: int) -> None:
+        self._height = new_height
+
+
+class AVLTree(IAVLTree[K, V], Generic[K, V]):
+    def __init__(self, starting_sequence: Optional[Sequence[Tuple[K, V]]]=None):
+        self._root = None
+        if starting_sequence:
+            for key, value in starting_sequence:
+                self.insert(key, value)
+
+    def insert(self, key: K, value: V) -> None:
+        raise NotImplementedError
+
+    def search(self, key: K) -> Union[V, None]:
+        raise NotImplementedError
+
+    def rotate_right(self, y: AVLNode[K, V]) -> AVLNode[K, V]:
+        x = y.left
+        T2 = x.right
+        x.right = y
+        y.left = T2
+        self.update_height(y)
+        self.update_height(x)
+        return x
+
+    def rotate_left(self, x: AVLNode[K, V]) -> AVLNode[K, V]:
+        y = x.right
+        T2 = y.left
+        y.left = x
+        x.right = T2
+        self.update_height(x)
+        self.update_height(y)
+        return y
+
+    def update_height(self, node: AVLNode[K, V]) -> None:
+        node.height = 1 + max(self.get_height(node.left), self.get_height(node.right))
+
+    def get_height(self, node: Optional[AVLNode[K, V]]) -> int:
+        if not node:
+            return 0
+        return node.height
+
+    def get_balance(self, node: AVLNode[K, V]) -> int:
+        if not node:
+            return 0
+        return self.get_height(node.left) - self.get_height(node.right)
 
 
 @dataclass
